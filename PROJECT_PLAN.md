@@ -7,10 +7,11 @@
 
 ### 技术栈
 
-- 框架：.NET 10 WinForms (net10.0-windows)
-- 翻译 API：腾讯翻译（TencentCloudSDK.tmt NuGet），预留百度/阿里
-- OCR：Windows 内置 OCR（Windows.Media.Ocr，免费默认）+ 腾讯 OCR（GeneralBasicOCR，高精度备选）
-- 截图：GDI+ CopyFromScreen + DPI 缩放适配
+- 框架：.NET 10 WinForms (net10.0-windows10.0.19041.0)
+- 翻译 API：腾讯翻译（TencentCloudSDK.tmt）/ 百度翻译 / 阿里翻译 / Google / 智谱 / DeepSeek / 自定义 API
+- OCR：Windows 内置 OCR（Windows.Media.Ocr）+ 腾讯 OCR + 百度 OCR / 自定义 OCR API
+- 截图：GDI+ CopyFromScreen + DPI 缩放适配（SetProcessDPIAware）
+- 窗口检测：Win32 WindowFromPoint + GetWindowRect（自动捕捉窗口）
 - 全局 Hook：Win32 SetWindowsHookEx（鼠标钩子 WH_MOUSE_LL）
 - 窗口文字读取：Windows UI Automation（System.Windows.Automation）
 - 全局快捷键：RegisterHotKey Win32 API
@@ -26,8 +27,12 @@ MyTranslate/
 ├── Core/                          # 核心业务（与界面解耦）
 │   ├── ITranslator.cs             # 翻译器统一接口
 │   ├── TencentTranslator.cs       # 腾讯翻译实现（含 SDK 预热）
-│   ├── BaiduTranslator.cs         # 百度翻译（预留骨架）
-│   ├── AlibabaTranslator.cs       # 阿里翻译（预留骨架）
+│   ├── BaiduTranslator.cs         # 百度翻译（待实现）
+│   ├── AlibabaTranslator.cs       # 阿里翻译（待实现）
+│   ├── GoogleTranslator.cs        # Google 翻译（待实现）
+│   ├── ZhipuTranslator.cs         # 智谱 AI 翻译（待实现）
+│   ├── DeepSeekTranslator.cs      # DeepSeek 翻译（待实现）
+│   ├── CustomTranslator.cs        # 自定义 API 翻译（待实现）
 │   ├── TranslationEngine.cs       # 翻译调度器（文本规范化→同语言→缓存→术语→API）
 │   ├── LanguageInfo.cs            # 语言枚举与各翻译器 API 代码映射
 │   ├── LanguageDetector.cs        # Unicode 范围语言检测 + 同语言判断
@@ -39,9 +44,11 @@ MyTranslate/
 ├── Capture/                       # 文字捕获层
 │   ├── GlobalMouseHook.cs         # 全局鼠标钩子（移动/悬停/点击/释放）+ NativeMethods
 │   ├── UIAutomationReader.cs      # UI Automation 读取窗口文字 + 选区 + 选区边界
-│   ├── IOcrProvider.cs            # OCR 接口
+│   ├── IOcrProvider.cs            # OCR 提供商统一接口
 │   ├── WindowsOcrProvider.cs      # Windows 内置 OCR（Bitmap→SoftwareBitmap→OcrEngine）
 │   ├── CloudOcrProvider.cs        # 腾讯云 OCR（GeneralBasicOCR，TencentCloudSDK.ocr）
+│   ├── BaiduOcrProvider.cs        # 百度 OCR（待实现）
+│   ├── CustomOcrProvider.cs       # 自定义 OCR API（待实现）
 │   ├── OcrManager.cs             # OCR 调度（主引擎识别，支持来源追踪）
 │   ├── ScreenCaptureHelper.cs     # 屏幕截图辅助（区域截图 + 鼠标周围截图 + DPI 适配）
 │   └── ClipboardHelper.cs         # 剪贴板辅助方案
@@ -181,9 +188,9 @@ MyTranslate/
 #### 第三阶段：悬停翻译（已完成）
 
 
-#### 第四阶段：OCR 文字识别与翻译（已完成）
+#### 第四阶段：OCR 文字识别与截图翻译（已完成）
 
-目标：为无法通过 UI Automation 读取文字的场景（图片、游戏、Electron 应用等）提供 OCR 识别能力。
+目标：为无法通过 UI Automation 读取文字的场景（图片、游戏、Electron 应用等）提供 OCR 识别能力，以及智能窗口截图功能。
 
 **基础设施（已完成）**
 
@@ -212,8 +219,12 @@ MyTranslate/
 
 1. CaptureOverlay 实现
    - 全屏半透明遮罩（30% 黑色，覆盖所有显示器）
-   - 鼠标拖拽框选矩形区域
+   - 悬停自动检测窗口（停止移动 200ms 后检测，避免闪烁）
+   - 窗口蓝色描边 + 四角标记 + 尺寸显示
+   - 点击捕获当前高亮窗口
+   - 拖拽框选任意矩形区域
    - 白色虚线边框 + 尺寸显示（W × H）
+   - 临时隐藏遮罩检测下方窗口（WindowFromPoint）
    - GetAsyncKeyState 轮询检测鼠标/ESC
    - TaskCompletionSource 异步返回选区
 
@@ -255,10 +266,100 @@ MyTranslate/
 具体工作：
 1. 浮窗动画（淡入淡出）
 2. 翻译请求限流（200ms 最小间隔）
-3. 多翻译器完善（百度、阿里）
-4. 开机自启动
-5. 缓存淘汰策略优化（按时间/收藏标记）
-6. 多义词浮窗展示优化（标签样式替代分号）
+3. 开机自启动
+4. 缓存淘汰策略优化（按时间/收藏标记）
+5. 多义词浮窗展示优化（标签样式替代分号）
+6. 截图翻译自动翻译选项（OCR 结果自动调用翻译 API）
+
+
+#### 第六阶段：多供应商扩展
+
+目标：支持多个翻译和 OCR 供应商，以及自定义 API 接口。
+
+**翻译供应商扩展**
+
+1. 腾讯翻译（已实现）
+   - TencentCloudSDK.tmt
+   - SecretId + SecretKey 认证
+
+2. 百度翻译（待实现）
+   - HTTP API 调用
+   - AppId + SecretKey 认证
+   - 签名：md5(appid+q+salt+key)
+
+3. 阿里翻译（待实现）
+   - HTTP API 调用
+   - AccessKeyId + AccessKeySecret 认证
+   - 签名：HMAC-SHA1
+
+4. Google 翻译（待实现）
+   - 免费 API（无需密钥，有频率限制）
+   - 或 Google Cloud Translation API（需 API Key）
+
+5. 智谱 AI（待实现）
+   - ChatGLM 大模型翻译
+   - API Key 认证
+
+6. DeepSeek（待实现）
+   - DeepSeek 大模型翻译
+   - API Key 认证
+
+7. 小米翻译（待确认）
+   - 需确认是否有公开翻译 API
+   - 如有，按相同接口模式接入
+
+8. 自定义 API（待实现）
+   - 用户自定义 API 地址
+   - 支持 GET/POST 请求
+   - 可配置请求头、请求体模板
+   - 可配置响应解析路径（JSON Path）
+
+**OCR 供应商扩展**
+
+1. Windows 内置 OCR（已实现）
+2. 腾讯 OCR（已实现）
+3. 百度 OCR（待实现）
+   - HTTP API 调用
+   - AppId + API Key 认证
+4. 阿里 OCR（待实现）
+5. Google Vision OCR（待实现）
+6. 自定义 OCR API（待实现）
+
+**架构设计**
+
+1. 翻译器统一接口（ITranslator）
+   - TranslateAsync(text, sourceLang, targetLang) → TranslationResult
+   - 各供应商实现此接口
+
+2. OCR 提供商统一接口（IOcrProvider）
+   - RecognizeAsync(bitmap) → string
+   - 各供应商实现此接口
+
+3. 供应商注册机制
+   - TranslationEngine.RegisterTranslator(ITranslator)
+   - OcrManager.RegisterProvider(IOcrProvider)
+   - 启动时根据配置注册所有已配置密钥的供应商
+
+4. 配置扩展（AppConfig）
+   - 每个供应商独立的密钥配置
+   - 当前选中的翻译器 ID
+   - 当前选中的 OCR 提供商
+
+**实施顺序**
+
+| 步骤 | 内容 | 涉及文件 |
+|------|------|----------|
+| 1 | 定义供应商注册机制 | TranslationEngine.cs, OcrManager.cs |
+| 2 | 实现百度翻译 | BaiduTranslator.cs |
+| 3 | 实现阿里翻译 | AlibabaTranslator.cs |
+| 4 | 实现 Google 翻译 | GoogleTranslator.cs（新建） |
+| 5 | 实现智谱 AI 翻译 | ZhipuTranslator.cs（新建） |
+| 6 | 实现 DeepSeek 翻译 | DeepSeekTranslator.cs（新建） |
+| 7 | 实现自定义 API 翻译 | CustomTranslator.cs（新建） |
+| 8 | 实现百度 OCR | BaiduOcrProvider.cs（新建） |
+| 9 | 实现自定义 OCR API | CustomOcrProvider.cs（新建） |
+| 10 | 设置界面扩展（多供应商密钥配置） | SettingsForm.cs, AppConfig.cs |
+| 11 | 测试各供应商 | 集成测试 |
 
 
 ### 关键技术要点
@@ -273,8 +374,10 @@ MyTranslate/
 8. **文本规范化**：TranslateAsync 入口处 trim + 合并空白，消除划词选区的不可见字符。
 9. **非翻译内容过滤**：URL/邮箱/文件路径/纯数字在划词翻译入口自动跳过。
 10. **OCR 降级机制**：悬停/划词翻译中 UI Automation 读取失败时，自动截图 OCR 识别文字作为兜底。
-11. **DPI 适配**：截图坐标需考虑 DPI 缩放，使用 Screen.FromPoint 获取屏幕信息并做坐标转换。
-12. **Windows OCR 语言包**：系统可能未安装所需语言的 OCR 包，需在设置中检测并提示安装。
+11. **DPI 适配**：启动时调用 SetProcessDPIAware，确保截图坐标正确。
+12. **Windows OCR 语言包**：优先使用中文语言包（zh-Hans/zh-Hant），回退到首个可用语言。
+13. **窗口自动捕捉**：截图时临时隐藏遮罩检测下方窗口，停止移动 200ms 后触发检测避免闪烁。
+14. **供应商扩展架构**：ITranslator / IOcrProvider 统一接口，支持多供应商注册和切换。
 
 
 ### 待细化与技术债
