@@ -15,23 +15,47 @@ public class AppConfig
     /// <summary>当前翻译器 ID</summary>
     public string CurrentTranslatorId { get; set; } = "tencent";
 
+    // ========== 腾讯翻译 ==========
+
     /// <summary>腾讯翻译 SecretId</summary>
     public string TencentSecretId { get; set; } = "";
 
     /// <summary>腾讯翻译 SecretKey</summary>
     public string TencentSecretKey { get; set; } = "";
 
-    /// <summary>百度翻译 AppId（预留）</summary>
+    /// <summary>腾讯 OCR SecretId（与翻译相同则留空）</summary>
+    public string TencentOcrSecretId { get; set; } = "";
+
+    /// <summary>腾讯 OCR SecretKey（与翻译相同则留空）</summary>
+    public string TencentOcrSecretKey { get; set; } = "";
+
+    // ========== 百度翻译 ==========
+
+    /// <summary>百度翻译 AppId</summary>
     public string BaiduAppId { get; set; } = "";
 
-    /// <summary>百度翻译 SecretKey（预留）</summary>
+    /// <summary>百度翻译 SecretKey</summary>
     public string BaiduSecretKey { get; set; } = "";
 
-    /// <summary>阿里翻译 AccessKeyId（预留）</summary>
+    /// <summary>百度 OCR API Key</summary>
+    public string BaiduOcrApiKey { get; set; } = "";
+
+    /// <summary>百度 OCR Secret Key</summary>
+    public string BaiduOcrSecretKey { get; set; } = "";
+
+    // ========== 阿里翻译 ==========
+
+    /// <summary>阿里翻译 AccessKeyId</summary>
     public string AlibabaAccessKeyId { get; set; } = "";
 
-    /// <summary>阿里翻译 AccessKeySecret（预留）</summary>
+    /// <summary>阿里翻译 AccessKeySecret</summary>
     public string AlibabaAccessKeySecret { get; set; } = "";
+
+    /// <summary>阿里 OCR AccessKeyId（与翻译相同则留空）</summary>
+    public string AlibabaOcrAccessKeyId { get; set; } = "";
+
+    /// <summary>阿里 OCR AccessKeySecret（与翻译相同则留空）</summary>
+    public string AlibabaOcrAccessKeySecret { get; set; } = "";
 
     // ========== 语言设置 ==========
 
@@ -45,12 +69,6 @@ public class AppConfig
 
     /// <summary>OCR 提供商</summary>
     public OcrProvider OcrProvider { get; set; } = OcrProvider.WindowsBuiltIn;
-
-    /// <summary>云端 OCR 的 SecretId（预留）</summary>
-    public string CloudOcrSecretId { get; set; } = "";
-
-    /// <summary>云端 OCR 的 SecretKey（预留）</summary>
-    public string CloudOcrApiKey { get; set; } = "";
 
     /// <summary>悬停/划词翻译读不到文字时是否自动 OCR 降级</summary>
     public bool OcrFallbackEnabled { get; set; } = true;

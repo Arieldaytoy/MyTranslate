@@ -116,8 +116,13 @@ public class SelectionOverlay : OverlayForm
             var sourceInfo = LanguageInfo.GetByLanguage(result.SourceLanguage);
             var targetInfo = LanguageInfo.GetByLanguage(result.TargetLanguage);
             var sourceTag = $"[{result.SourceDisplay}]";
+            var providerTag = "";
+            if (!string.IsNullOrEmpty(result.TranslatorName) && !result.TranslatorName.StartsWith("("))
+                providerTag = $"({result.TranslatorName})";
+            else if (!string.IsNullOrEmpty(result.TranslatorName))
+                providerTag = result.TranslatorName;
             var inputTag = string.IsNullOrEmpty(result.InputTag) ? "[划词]" : result.InputTag;
-            _headerLabel.Text = $"{sourceInfo?.DisplayName ?? "?"}→{targetInfo?.DisplayName ?? "?"} {sourceTag}{inputTag}";
+            _headerLabel.Text = $"{sourceInfo?.DisplayName ?? "?"}→{targetInfo?.DisplayName ?? "?"} {sourceTag}{providerTag}{inputTag}";
             _contentLabel.Text = result.TranslatedText;
             _contentLabel.ForeColor = result.IsCached
                 ? Color.FromArgb(30, 100, 30)

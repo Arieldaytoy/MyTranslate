@@ -69,7 +69,7 @@ public class CaptureTranslationManager : IDisposable
 
             // 显示浮窗
             bool isBuiltIn = ocrSource == "Windows OCR";
-            ShowOcrResult(ocrText.Trim(), isBuiltIn, captureRect);
+            ShowOcrResult(ocrText.Trim(), isBuiltIn, captureRect, sourceName);
 
             OcrCompleted?.Invoke(this, ocrText.Trim());
         }
@@ -86,7 +86,7 @@ public class CaptureTranslationManager : IDisposable
             _overlay = new CaptureOverlay();
     }
 
-    private void ShowOcrResult(string ocrText, bool isBuiltIn, Rectangle captureRect)
+    private void ShowOcrResult(string ocrText, bool isBuiltIn, Rectangle captureRect, string providerName)
     {
         if (_resultOverlay == null)
         {
@@ -96,16 +96,17 @@ public class CaptureTranslationManager : IDisposable
         }
 
         var sourceTag = isBuiltIn ? "内置" : "API";
+        var providerTag = isBuiltIn ? "内置OCR" : $"{providerName}OCR";
 
         var result = new TranslationResult
         {
             OriginalText = ocrText,
             TranslatedText = ocrText,
             Success = true,
-            InputTag = $"[OCR][{sourceTag}]",
+            InputTag = $"[{providerTag}][{sourceTag}]",
             SourceLanguage = Language.Auto,
             TargetLanguage = Language.Auto,
-            TranslatorName = "OCR",
+            TranslatorName = providerName,
         };
 
         _resultOverlay.Opacity = _config.OverlayOpacity;

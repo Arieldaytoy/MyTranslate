@@ -99,17 +99,8 @@ public partial class Main_Translate : Form
         var winOcr = new WindowsOcrProvider();
         _ocrManager.RegisterProvider(winOcr);
 
-        if (!string.IsNullOrEmpty(_config.CloudOcrSecretId) && !string.IsNullOrEmpty(_config.CloudOcrApiKey))
-        {
-            var cloudOcr = new CloudOcrProvider(_config.CloudOcrSecretId, _config.CloudOcrApiKey);
-            _ocrManager.RegisterProvider(cloudOcr);
-        }
-
-        bool useBuiltinInit = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
-        if (useBuiltinInit)
-            _ocrManager.SetPrimaryProvider(winOcr.Id);
-        else
-            _ocrManager.SetPrimaryProvider(CaptureNs.CloudOcrProvider.TencentId);
+        // 根据当前供应商注册 OCR 提供商
+        InitializeOcrProvider();
 
         _captureManager = new CaptureTranslationManager(
             _ocrManager, _translationEngine, _config);
@@ -422,26 +413,13 @@ public partial class Main_Translate : Form
         var winOcr = new WindowsOcrProvider();
         _ocrManager.RegisterProvider(winOcr);
 
-        if (!string.IsNullOrEmpty(_config.CloudOcrSecretId) && !string.IsNullOrEmpty(_config.CloudOcrApiKey))
-        {
-            var cloudOcr = new CloudOcrProvider(_config.CloudOcrSecretId, _config.CloudOcrApiKey);
-            _ocrManager.RegisterProvider(cloudOcr);
-        }
+        // 根据当前供应商注册 OCR 提供商
+        InitializeOcrProvider();
 
         bool useBuiltin = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
+        _ocrManager.SetPrimaryProvider(useBuiltin ? winOcr.Id : GetCurrentOcrProviderId());
 
-        if (useBuiltin)
-        {
-            // 内置：只用 Windows OCR，不降级
-            _ocrManager.SetPrimaryProvider(winOcr.Id);
-        }
-        else
-        {
-            // API：只用腾讯 OCR，不降级
-            _ocrManager.SetPrimaryProvider(CaptureNs.CloudOcrProvider.TencentId);
-        }
-
-        // 重建 CaptureTranslationManager 以使用新的 OcrManager
+        // 重建 CaptureTranslationManager
         _captureManager?.Dispose();
         _captureManager = new CaptureTranslationManager(
             _ocrManager, _translationEngine, _config);
@@ -452,6 +430,42 @@ public partial class Main_Translate : Form
                 Invoke(() => StateInfo_toolStripStatusLabel.Text = status);
             else
                 StateInfo_toolStripStatusLabel.Text = status;
+        };
+    }
+
+    private void InitializeOcrProvider()
+    {
+        string translatorId = _config.CurrentTranslatorId;
+
+        if (translatorId == "tencent")
+        {
+            string id = !string.IsNullOrEmpty(_config.TencentOcrSecretId) ? _config.TencentOcrSecretId : _config.TencentSecretId;
+            string key = !string.IsNullOrEmpty(_config.TencentOcrSecretKey) ? _config.TencentOcrSecretKey : _config.TencentSecretKey;
+            if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(key))
+                _ocrManager.RegisterProvider(new CloudOcrProvider(id, key));
+        }
+        else if (translatorId == "baidu")
+        {
+            if (!string.IsNullOrEmpty(_config.BaiduOcrApiKey) && !string.IsNullOrEmpty(_config.BaiduOcrSecretKey))
+                _ocrManager.RegisterProvider(new BaiduOcrProvider(_config.BaiduOcrApiKey, _config.BaiduOcrSecretKey));
+        }
+        else if (translatorId == "alibaba")
+        {
+            string id = !string.IsNullOrEmpty(_config.AlibabaOcrAccessKeyId) ? _config.AlibabaOcrAccessKeyId : _config.AlibabaAccessKeyId;
+            string key = !string.IsNullOrEmpty(_config.AlibabaOcrAccessKeySecret) ? _config.AlibabaOcrAccessKeySecret : _config.AlibabaAccessKeySecret;
+            if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(key))
+                _ocrManager.RegisterProvider(new CloudOcrProvider(id, key));
+        }
+    }
+
+    private string GetCurrentOcrProviderId()
+    {
+        return _config.CurrentTranslatorId switch
+        {
+            "tencent" => CloudOcrProvider.TencentId,
+            "baidu" => "baidu_ocr",
+            "alibaba" => CloudOcrProvider.TencentId, // 阿里使用腾讯 OCR 兼容接口
+            _ => CloudOcrProvider.TencentId,
         };
     }
 
@@ -530,9 +544,13 @@ public partial class Main_Translate : Form
             var time = item.Timestamp.ToString("HH:mm");
             var sourceLabel = item.SourceDisplay;
 
-            History_richTextBox.AppendText($"[{time}] {sourceInfo?.DisplayName}→{targetInfo?.DisplayName} ({sourceLabel}){item.InputTag}\n");
-            History_richTextBox.AppendText($"  {Truncate(item.OriginalText, 30)}\n");
-            History_richTextBox.AppendText($"  → {Truncate(item.TranslatedText, 30)}\n\n");
+            // 格式：[时间]源→目标 [来源](供应商)[标签]
+            var providerTag = !string.IsNullOrEmpty(item.TranslatorName) && !item.TranslatorName.StartsWith("(")
+                ? $"({item.TranslatorName})" : item.TranslatorName ?? "";
+            var header = $"[{time}] {sourceInfo?.DisplayName}→{targetInfo?.DisplayName} [{sourceLabel}]{providerTag}{item.InputTag}";
+            History_richTextBox.AppendText($"{header}\n");
+            History_richTextBox.AppendText($"  {Truncate(item.OriginalText, 40)}\n");
+            History_richTextBox.AppendText($"  → {Truncate(item.TranslatedText, 40)}\n\n");
         }
     }
 

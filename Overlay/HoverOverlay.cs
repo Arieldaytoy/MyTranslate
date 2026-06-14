@@ -115,7 +115,13 @@ public class HoverOverlay : OverlayForm
             var sourceInfo = LanguageInfo.GetByLanguage(result.SourceLanguage);
             var targetInfo = LanguageInfo.GetByLanguage(result.TargetLanguage);
             var sourceTag = $"[{result.SourceDisplay}]";
-            _headerLabel.Text = $"{sourceInfo?.DisplayName ?? "?"}→{targetInfo?.DisplayName ?? "?"} {sourceTag}[悬停]";
+            // 如果 TranslatorName 已经包含括号或为空，则不额外添加
+            var providerTag = "";
+            if (!string.IsNullOrEmpty(result.TranslatorName) && !result.TranslatorName.StartsWith("("))
+                providerTag = $"({result.TranslatorName})";
+            else if (!string.IsNullOrEmpty(result.TranslatorName))
+                providerTag = result.TranslatorName;
+            _headerLabel.Text = $"{sourceInfo?.DisplayName ?? "?"}→{targetInfo?.DisplayName ?? "?"} {sourceTag}{providerTag}[悬停]";
             _contentLabel.Text = result.TranslatedText;
             _contentLabel.ForeColor = result.IsCached
                 ? Color.FromArgb(30, 100, 30)   // 缓存命中用绿色

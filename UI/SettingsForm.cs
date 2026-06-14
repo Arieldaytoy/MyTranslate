@@ -24,16 +24,24 @@ public class SettingsForm : Form
     private TextBox _baiduSecretKeyTextBox = null!;
     private TextBox _alibabaKeyIdTextBox = null!;
     private TextBox _alibabaKeySecretTextBox = null!;
-    private Label _testResultLabel = null!;
-    private Button _testButton = null!;
+    private Label _transTestResultLabel = null!;
+    private Button _transTestButton = null!;
     private ComboBox _sourceLanguageComboBox = null!;
     private ComboBox _targetLanguageComboBox = null!;
 
     // OCR 方案控件（在 API 设置页签中）
     private RadioButton _windowsOcrRadio = null!;
     private RadioButton _cloudOcrRadio = null!;
-    private TextBox _ocrKeyIdTextBox = null!;
-    private TextBox _ocrKeySecretTextBox = null!;
+    private Label _ocrTestResultLabel = null!;
+    private Button _ocrTestButton = null!;
+
+    // 每个供应商的 OCR 密钥
+    private TextBox _tencentOcrIdTextBox = null!;
+    private TextBox _tencentOcrKeyTextBox = null!;
+    private TextBox _baiduOcrIdTextBox = null!;
+    private TextBox _baiduOcrKeyTextBox = null!;
+    private TextBox _alibabaOcrIdTextBox = null!;
+    private TextBox _alibabaOcrKeyTextBox = null!;
 
     // ========== 通用设置页签控件 ==========
     private CheckBox _autoStartCheckBox = null!;
@@ -111,31 +119,13 @@ public class SettingsForm : Form
             Height = 50,
         };
 
-        _testButton = new Button
-        {
-            Text = "测试连接",
-            Size = new Size(85, 32),
-            Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-            Location = new Point(10, 9),
-        };
-        _testButton.Click += OnTestClicked;
-
-        _testResultLabel = new Label
-        {
-            AutoSize = true,
-            ForeColor = Color.Gray,
-            Text = "",
-            Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-            Location = new Point(105, 15),
-        };
-
         _okButton = new Button
         {
             Text = "确定",
             Size = new Size(85, 32),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
         };
-        _okButton.Location = new Point(buttonPanel.Width - 190, 9);
+        _okButton.Location = new Point(buttonPanel.Width - 95, 9);
         _okButton.Click += OnOkClicked;
 
         _cancelButton = new Button
@@ -144,17 +134,15 @@ public class SettingsForm : Form
             Size = new Size(85, 32),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
         };
-        _cancelButton.Location = new Point(buttonPanel.Width - 95, 9);
+        _cancelButton.Location = new Point(buttonPanel.Width - 190, 9);
 
-        buttonPanel.Controls.Add(_testButton);
-        buttonPanel.Controls.Add(_testResultLabel);
         buttonPanel.Controls.Add(_okButton);
         buttonPanel.Controls.Add(_cancelButton);
 
         buttonPanel.Resize += (s, e) =>
         {
-            _okButton.Location = new Point(buttonPanel.Width - 190, 9);
-            _cancelButton.Location = new Point(buttonPanel.Width - 95, 9);
+            _cancelButton.Location = new Point(buttonPanel.Width - 190, 9);
+            _okButton.Location = new Point(buttonPanel.Width - 95, 9);
         };
 
         var separator = new Panel
@@ -171,10 +159,8 @@ public class SettingsForm : Form
         AcceptButton = _okButton;
         CancelButton = _cancelButton;
 
-        // 确保初始在 API 设置页，显示测试按钮
+        // 确保初始在 API 设置页
         _tabControl.SelectedIndex = 0;
-        _testButton.Visible = true;
-        _testResultLabel.Visible = true;
     }
 
     // ========== API 设置页签 ==========
@@ -186,7 +172,7 @@ public class SettingsForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 20,
+            RowCount = 30,
             Padding = new Padding(10),
             AutoScroll = true,
         };
@@ -195,6 +181,19 @@ public class SettingsForm : Form
 
         int rowHeight = 34;
         int row = 0;
+
+        // 帮助链接
+        var helpLink = new LinkLabel
+        {
+            Text = "如何获取 API 密钥？点击这里查看帮助",
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+        };
+        helpLink.LinkClicked += (s, e) => ShowApiKeyHelp();
+        layout.Controls.Add(helpLink, 0, row);
+        layout.SetColumnSpan(helpLink, 2);
+        row++;
 
         // 供应商
         AddNormalRow(layout, ref row, rowHeight, "供应商：");
@@ -206,7 +205,7 @@ public class SettingsForm : Form
         // 翻译 API 标题
         AddTitleRow(layout, ref row, "翻译 API");
 
-        // SecretId
+        // SecretId / AppId / AccessKeyId
         AddNormalRow(layout, ref row, rowHeight, "SecretId：");
         _tencentSecretIdTextBox = new TextBox { Dock = DockStyle.Fill };
         _baiduAppIdTextBox = new TextBox { Dock = DockStyle.Fill };
@@ -224,10 +223,28 @@ public class SettingsForm : Form
         layout.Controls.Add(_baiduSecretKeyTextBox, 1, row - 1);
         layout.Controls.Add(_alibabaKeySecretTextBox, 1, row - 1);
 
-        // 用 Panel 包裹三个供应商的 Id+Key，便于整体显隐
         _tencentApiPanel = MakePairPanel(_tencentSecretIdTextBox, _tencentSecretKeyTextBox);
         _baiduApiPanel = MakePairPanel(_baiduAppIdTextBox, _baiduSecretKeyTextBox);
         _alibabaApiPanel = MakePairPanel(_alibabaKeyIdTextBox, _alibabaKeySecretTextBox);
+
+        // 翻译测试按钮 + 结果
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        var transTestFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
+        _transTestButton = new Button { Text = "测试翻译", AutoSize = true };
+        _transTestButton.Click += OnTransTestClicked;
+        _transTestResultLabel = new Label
+        {
+            AutoSize = true,
+            ForeColor = Color.Gray,
+            Text = "",
+            Padding = new Padding(8, 5, 0, 0),
+            MaximumSize = new Size(350, 0),
+        };
+        transTestFlow.Controls.Add(_transTestButton);
+        transTestFlow.Controls.Add(_transTestResultLabel);
+        layout.Controls.Add(transTestFlow, 0, row);
+        layout.SetColumnSpan(transTestFlow, 2);
+        row++;
 
         // OCR 方案 标题
         AddTitleRow(layout, ref row, "OCR 方案");
@@ -243,15 +260,57 @@ public class SettingsForm : Form
         ocrRadioPanel.Controls.Add(_cloudOcrRadio);
         layout.Controls.Add(ocrRadioPanel, 1, row - 1);
 
-        // OCR SecretId
-        AddNormalRow(layout, ref row, rowHeight, "SecretId：");
-        _ocrKeyIdTextBox = new TextBox { Dock = DockStyle.Fill };
-        layout.Controls.Add(_ocrKeyIdTextBox, 1, row - 1);
+        // OCR SecretId（每个供应商不同）
+        AddNormalRow(layout, ref row, rowHeight, "OCR Id：");
+        _tencentOcrIdTextBox = new TextBox { Dock = DockStyle.Fill };
+        _baiduOcrIdTextBox = new TextBox { Dock = DockStyle.Fill };
+        _alibabaOcrIdTextBox = new TextBox { Dock = DockStyle.Fill };
+        layout.Controls.Add(_tencentOcrIdTextBox, 1, row - 1);
+        layout.Controls.Add(_baiduOcrIdTextBox, 1, row - 1);
+        layout.Controls.Add(_alibabaOcrIdTextBox, 1, row - 1);
 
-        // OCR SecretKey
-        AddNormalRow(layout, ref row, rowHeight, "SecretKey：");
-        _ocrKeySecretTextBox = new TextBox { Dock = DockStyle.Fill, UseSystemPasswordChar = true };
-        layout.Controls.Add(_ocrKeySecretTextBox, 1, row - 1);
+        // OCR SecretKey（每个供应商不同）
+        AddNormalRow(layout, ref row, rowHeight, "OCR Key：");
+        _tencentOcrKeyTextBox = new TextBox { Dock = DockStyle.Fill, UseSystemPasswordChar = true };
+        _baiduOcrKeyTextBox = new TextBox { Dock = DockStyle.Fill, UseSystemPasswordChar = true };
+        _alibabaOcrKeyTextBox = new TextBox { Dock = DockStyle.Fill, UseSystemPasswordChar = true };
+        layout.Controls.Add(_tencentOcrKeyTextBox, 1, row - 1);
+        layout.Controls.Add(_baiduOcrKeyTextBox, 1, row - 1);
+        layout.Controls.Add(_alibabaOcrKeyTextBox, 1, row - 1);
+
+        // OCR 提示文字
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
+        var ocrHintLabel = new Label
+        {
+            Text = "提示：留空则使用翻译 API 的密钥",
+            AutoSize = true,
+            ForeColor = Color.Gray,
+            Font = new Font("Microsoft YaHei UI", 8f),
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+        };
+        layout.Controls.Add(ocrHintLabel, 0, row);
+        layout.SetColumnSpan(ocrHintLabel, 2);
+        row++;
+
+        // OCR 测试按钮 + 结果
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        var ocrTestFlow = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
+        _ocrTestButton = new Button { Text = "测试 OCR", AutoSize = true };
+        _ocrTestButton.Click += OnOcrTestClicked;
+        _ocrTestResultLabel = new Label
+        {
+            AutoSize = true,
+            ForeColor = Color.Gray,
+            Text = "",
+            Padding = new Padding(8, 5, 0, 0),
+            MaximumSize = new Size(350, 0),
+        };
+        ocrTestFlow.Controls.Add(_ocrTestButton);
+        ocrTestFlow.Controls.Add(_ocrTestResultLabel);
+        layout.Controls.Add(ocrTestFlow, 0, row);
+        layout.SetColumnSpan(ocrTestFlow, 2);
+        row++;
 
         // 默认源语言
         AddNormalRow(layout, ref row, rowHeight, "默认源语言：");
@@ -273,6 +332,87 @@ public class SettingsForm : Form
         var panel = new Panel { Visible = false };
         panel.Tag = (ctrl1, ctrl2);
         return panel;
+    }
+
+    // ========== OCR 测试 ==========
+
+    private async void OnOcrTestClicked(object? sender, EventArgs e)
+    {
+        _ocrTestButton.Enabled = false;
+        _ocrTestResultLabel.ForeColor = Color.Gray;
+        _ocrTestResultLabel.Text = "正在测试...";
+
+        try
+        {
+            if (_windowsOcrRadio.Checked)
+            {
+                var langs = CaptureNs.WindowsOcrProvider.GetAvailableLanguages();
+                if (langs == null || langs.Count == 0)
+                {
+                    _ocrTestResultLabel.ForeColor = Color.Red;
+                    _ocrTestResultLabel.Text = "系统未安装 OCR 语言包";
+                    return;
+                }
+                bool hasChinese = langs.Any(l => l.StartsWith("zh", StringComparison.OrdinalIgnoreCase));
+                _ocrTestResultLabel.ForeColor = Color.Green;
+                _ocrTestResultLabel.Text = $"Windows OCR 可用（{langs.Count} 种语言{(hasChinese ? "，含中文" : "")}）";
+            }
+            else
+            {
+                // 获取当前供应商的 OCR 密钥
+                int providerIdx = _translatorComboBox.SelectedIndex;
+                string secretId = "", secretKey = "";
+
+                if (providerIdx == 0) // 腾讯
+                {
+                    secretId = _tencentOcrIdTextBox.Text.Trim();
+                    secretKey = _tencentOcrKeyTextBox.Text.Trim();
+                    if (string.IsNullOrEmpty(secretId)) secretId = _tencentSecretIdTextBox.Text.Trim();
+                    if (string.IsNullOrEmpty(secretKey)) secretKey = _tencentSecretKeyTextBox.Text.Trim();
+                }
+                else if (providerIdx == 1) // 百度
+                {
+                    secretId = _baiduOcrIdTextBox.Text.Trim();
+                    secretKey = _baiduOcrKeyTextBox.Text.Trim();
+                }
+                else // 阿里
+                {
+                    secretId = _alibabaOcrIdTextBox.Text.Trim();
+                    secretKey = _alibabaOcrKeyTextBox.Text.Trim();
+                    if (string.IsNullOrEmpty(secretId)) secretId = _alibabaKeyIdTextBox.Text.Trim();
+                    if (string.IsNullOrEmpty(secretKey)) secretKey = _alibabaKeySecretTextBox.Text.Trim();
+                }
+
+                if (string.IsNullOrEmpty(secretId) || string.IsNullOrEmpty(secretKey))
+                {
+                    _ocrTestResultLabel.ForeColor = Color.Red;
+                    _ocrTestResultLabel.Text = "请先填写 OCR API 密钥";
+                    return;
+                }
+
+                CaptureNs.IOcrProvider provider = providerIdx == 1
+                    ? new CaptureNs.BaiduOcrProvider(secretId, secretKey)
+                    : new CaptureNs.CloudOcrProvider(secretId, secretKey);
+
+                using var bmp = new Bitmap(200, 50);
+                using var g = Graphics.FromImage(bmp);
+                g.Clear(Color.White);
+                g.DrawString("Test", new Font("Arial", 16), Brushes.Black, 10, 10);
+
+                var text = await provider.RecognizeAsync(bmp);
+                _ocrTestResultLabel.ForeColor = Color.Green;
+                _ocrTestResultLabel.Text = $"识别成功：{text?.Trim() ?? "(空)"}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _ocrTestResultLabel.ForeColor = Color.Red;
+            _ocrTestResultLabel.Text = $"出错: {ex.Message}";
+        }
+        finally
+        {
+            _ocrTestButton.Enabled = true;
+        }
     }
 
     /// <summary>添加一行标签+空白单元格，返回 row-1</summary>
@@ -309,15 +449,26 @@ public class SettingsForm : Form
 
     private void UpdateApiPanelVisibility()
     {
+        if (_tencentApiPanel == null) return; // 初始化期间不处理
+
         bool showTencent = _translatorComboBox.SelectedIndex == 0;
         bool showBaidu = _translatorComboBox.SelectedIndex == 1;
         bool showAlibaba = _translatorComboBox.SelectedIndex == 2;
 
+        // 翻译密钥
         SetPairPanelVisibility(_tencentApiPanel, showTencent);
         SetPairPanelVisibility(_baiduApiPanel, showBaidu);
         SetPairPanelVisibility(_alibabaApiPanel, showAlibaba);
 
-        _testResultLabel.Text = "";
+        // OCR 密钥
+        _tencentOcrIdTextBox.Visible = showTencent;
+        _tencentOcrKeyTextBox.Visible = showTencent;
+        _baiduOcrIdTextBox.Visible = showBaidu;
+        _baiduOcrKeyTextBox.Visible = showBaidu;
+        _alibabaOcrIdTextBox.Visible = showAlibaba;
+        _alibabaOcrKeyTextBox.Visible = showAlibaba;
+
+        _transTestResultLabel.Text = "";
     }
 
     private static void SetPairPanelVisibility(Panel panel, bool visible)
@@ -327,175 +478,6 @@ public class SettingsForm : Form
             c1.Visible = visible;
             c2.Visible = visible;
         }
-    }
-
-    // ========== OCR 方案切换 ==========
-
-    private void OnOcrSchemeChanged(object? sender, EventArgs e)
-    {
-        bool isCloud = _cloudOcrRadio.Checked;
-        _ocrKeyIdTextBox.Enabled = isCloud;
-        _ocrKeySecretTextBox.Enabled = isCloud;
-    }
-
-    // ========== Tab 切换时控制测试按钮显示 ==========
-
-    private void OnTabChanged(object? sender, EventArgs e)
-    {
-        UpdateTestButtonVisibility();
-    }
-
-    private void UpdateTestButtonVisibility()
-    {
-        bool isApiTab = _tabControl.SelectedIndex == 0;
-        _testButton.Visible = isApiTab;
-        _testResultLabel.Visible = isApiTab;
-        if (!isApiTab)
-            _testResultLabel.Text = "";
-    }
-
-    // ========== 测试连接 ==========
-
-    private async void OnTestClicked(object? sender, EventArgs e)
-    {
-        _testButton.Enabled = false;
-        _testResultLabel.ForeColor = Color.Gray;
-        _testResultLabel.Text = "正在测试连接...";
-
-        try
-        {
-            var (translatorId, id, key) = _translatorComboBox.SelectedIndex switch
-            {
-                0 => ("tencent", _tencentSecretIdTextBox.Text.Trim(), _tencentSecretKeyTextBox.Text.Trim()),
-                1 => ("baidu", _baiduAppIdTextBox.Text.Trim(), _baiduSecretKeyTextBox.Text.Trim()),
-                2 => ("alibaba", _alibabaKeyIdTextBox.Text.Trim(), _alibabaKeySecretTextBox.Text.Trim()),
-                _ => ("", "", ""),
-            };
-
-            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(key))
-            {
-                _testResultLabel.ForeColor = Color.Red;
-                _testResultLabel.Text = "请先填写完整的 API 密钥";
-                return;
-            }
-
-            ITranslator? translator = CreateTranslatorFromFields(id, key, translatorId);
-            if (translator == null)
-            {
-                _testResultLabel.ForeColor = Color.Red;
-                _testResultLabel.Text = "未知翻译器类型";
-                return;
-            }
-
-            _engine.RegisterTranslator(translator);
-            _engine.SetCurrentTranslator(translatorId);
-            _engine.ClearCache();
-
-            TranslationResult result;
-            try
-            {
-                result = await translator.TranslateAsync("hello", Language.English, Language.Chinese);
-            }
-            catch
-            {
-                await Task.Delay(300);
-                result = await translator.TranslateAsync("hello", Language.English, Language.Chinese);
-            }
-
-            if (result.Success)
-            {
-                _testResultLabel.ForeColor = Color.Green;
-                _testResultLabel.Text = $"连接成功！hello → {result.TranslatedText}";
-            }
-            else
-            {
-                _testResultLabel.ForeColor = Color.Red;
-                _testResultLabel.Text = $"连接失败: {result.ErrorMessage}";
-            }
-        }
-        catch (Exception ex)
-        {
-            _testResultLabel.ForeColor = Color.Red;
-            _testResultLabel.Text = $"测试出错: {ex.Message}";
-        }
-        finally
-        {
-            _testButton.Enabled = true;
-        }
-    }
-
-    private ITranslator? CreateTranslatorFromFields(string id, string key, string type)
-    {
-        return type switch
-        {
-            "tencent" => new TencentTranslator(id, key),
-            "baidu" => new BaiduTranslator(id, key),
-            "alibaba" => new AlibabaTranslator(id, key),
-            _ => null,
-        };
-    }
-
-    // ========== 加载/保存设置 ==========
-
-    private void LoadSettings()
-    {
-        _translatorComboBox.SelectedIndex = _config.CurrentTranslatorId switch
-        {
-            "tencent" => 0,
-            "baidu" => 1,
-            "alibaba" => 2,
-            _ => 0,
-        };
-
-        _tencentSecretIdTextBox.Text = _config.TencentSecretId;
-        _tencentSecretKeyTextBox.Text = _config.TencentSecretKey;
-        _baiduAppIdTextBox.Text = _config.BaiduAppId;
-        _baiduSecretKeyTextBox.Text = _config.BaiduSecretKey;
-        _alibabaKeyIdTextBox.Text = _config.AlibabaAccessKeyId;
-        _alibabaKeySecretTextBox.Text = _config.AlibabaAccessKeySecret;
-
-        UpdateApiPanelVisibility();
-
-        // OCR 设置
-        _windowsOcrRadio.Checked = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
-        _cloudOcrRadio.Checked = _config.OcrProvider != CaptureNs.OcrProvider.WindowsBuiltIn;
-        _ocrKeyIdTextBox.Text = _config.CloudOcrSecretId;
-        _ocrKeySecretTextBox.Text = _config.CloudOcrApiKey;
-        OnOcrSchemeChanged(null, EventArgs.Empty);
-
-        // 语言列表
-        var languageNames = LanguageInfo.GetDisplayNames();
-        _sourceLanguageComboBox.Items.AddRange(languageNames);
-        _targetLanguageComboBox.Items.AddRange(languageNames);
-        _sourceLanguageComboBox.SelectedIndex = (int)_config.DefaultSourceLanguage;
-        _targetLanguageComboBox.SelectedIndex = (int)_config.DefaultTargetLanguage;
-
-        // 通用设置
-        _autoStartCheckBox.Checked = _config.AutoStart;
-        _minimizeToTrayCheckBox.Checked = _config.MinimizeToTray;
-        _hoverDelayNumeric.Value = _config.HoverDelayMs;
-        _opacityTrackBar.Value = (int)(_config.OverlayOpacity * 100);
-        _hoverEnabledCheckBox.Checked = _config.HoverTranslationEnabled;
-        _selectionEnabledCheckBox.Checked = _config.SelectionTranslationEnabled;
-        _selectionMinLengthNumeric.Value = _config.SelectionMinTextLength;
-        _selectionClipboardCheckBox.Checked = _config.SelectionClipboardFallback;
-        _selectionHistoryCheckBox.Checked = _config.SelectionShowHistory;
-        _selectionOverlayCheckBox.Checked = _config.SelectionShowOverlay;
-        _hoverMinLengthNumeric.Value = _config.HoverMinTextLength;
-        _hoverHistoryCheckBox.Checked = _config.HoverShowHistory;
-        _hoverOverlayCheckBox.Checked = _config.HoverShowOverlay;
-
-        // 快捷键
-        _toggleHotkeyTextBox.Text = _config.ToggleHotkey;
-        _captureHotkeyTextBox.Text = _config.CaptureHotkey;
-        _toggleOcrHotkeyTextBox.Text = _config.ToggleOcrHotkey;
-
-        // 缓存自动保存
-        _cacheAutoSaveCheckBox.Checked = _config.CacheAutoSaveEnabled;
-        _cacheAutoSaveIntervalNumeric.Value = _config.CacheAutoSaveIntervalMinutes;
-        _cacheAutoSaveJsonCheckBox.Checked = _config.CacheAutoSaveExportJson;
-        _cacheAutoSaveCsvCheckBox.Checked = _config.CacheAutoSaveExportCsv;
-        _cacheAutoSaveDirTextBox.Text = _config.CacheAutoSaveDirectory;
     }
 
     private void OnOkClicked(object? sender, EventArgs e)
@@ -522,8 +504,14 @@ public class SettingsForm : Form
         _config.OcrProvider = _windowsOcrRadio.Checked
             ? CaptureNs.OcrProvider.WindowsBuiltIn
             : CaptureNs.OcrProvider.TencentOcr;
-        _config.CloudOcrSecretId = _ocrKeyIdTextBox.Text.Trim();
-        _config.CloudOcrApiKey = _ocrKeySecretTextBox.Text.Trim();
+
+        // OCR 密钥（每个供应商独立）
+        _config.TencentOcrSecretId = _tencentOcrIdTextBox.Text.Trim();
+        _config.TencentOcrSecretKey = _tencentOcrKeyTextBox.Text.Trim();
+        _config.BaiduOcrApiKey = _baiduOcrIdTextBox.Text.Trim();
+        _config.BaiduOcrSecretKey = _baiduOcrKeyTextBox.Text.Trim();
+        _config.AlibabaOcrAccessKeyId = _alibabaOcrIdTextBox.Text.Trim();
+        _config.AlibabaOcrAccessKeySecret = _alibabaOcrKeyTextBox.Text.Trim();
 
         // 通用设置
         _config.AutoStart = _autoStartCheckBox.Checked;
@@ -918,5 +906,205 @@ public class SettingsForm : Form
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleRight,
         };
+    }
+
+    // ========== 缺失的方法 ==========
+
+    private void LoadSettings()
+    {
+        _translatorComboBox.SelectedIndex = _config.CurrentTranslatorId switch
+        {
+            "tencent" => 0,
+            "baidu" => 1,
+            "alibaba" => 2,
+            _ => 0,
+        };
+
+        _tencentSecretIdTextBox.Text = _config.TencentSecretId;
+        _tencentSecretKeyTextBox.Text = _config.TencentSecretKey;
+        _baiduAppIdTextBox.Text = _config.BaiduAppId;
+        _baiduSecretKeyTextBox.Text = _config.BaiduSecretKey;
+        _alibabaKeyIdTextBox.Text = _config.AlibabaAccessKeyId;
+        _alibabaKeySecretTextBox.Text = _config.AlibabaAccessKeySecret;
+
+        _tencentOcrIdTextBox.Text = _config.TencentOcrSecretId;
+        _tencentOcrKeyTextBox.Text = _config.TencentOcrSecretKey;
+        _baiduOcrIdTextBox.Text = _config.BaiduOcrApiKey;
+        _baiduOcrKeyTextBox.Text = _config.BaiduOcrSecretKey;
+        _alibabaOcrIdTextBox.Text = _config.AlibabaOcrAccessKeyId;
+        _alibabaOcrKeyTextBox.Text = _config.AlibabaOcrAccessKeySecret;
+
+        UpdateApiPanelVisibility();
+
+        _windowsOcrRadio.Checked = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
+        _cloudOcrRadio.Checked = _config.OcrProvider != CaptureNs.OcrProvider.WindowsBuiltIn;
+        OnOcrSchemeChanged(null, EventArgs.Empty);
+
+        var languageNames = LanguageInfo.GetDisplayNames();
+        _sourceLanguageComboBox.Items.AddRange(languageNames);
+        _targetLanguageComboBox.Items.AddRange(languageNames);
+        _sourceLanguageComboBox.SelectedIndex = (int)_config.DefaultSourceLanguage;
+        _targetLanguageComboBox.SelectedIndex = (int)_config.DefaultTargetLanguage;
+
+        _autoStartCheckBox.Checked = _config.AutoStart;
+        _minimizeToTrayCheckBox.Checked = _config.MinimizeToTray;
+        _hoverDelayNumeric.Value = _config.HoverDelayMs;
+        _opacityTrackBar.Value = (int)(_config.OverlayOpacity * 100);
+        _hoverEnabledCheckBox.Checked = _config.HoverTranslationEnabled;
+        _selectionEnabledCheckBox.Checked = _config.SelectionTranslationEnabled;
+        _selectionMinLengthNumeric.Value = _config.SelectionMinTextLength;
+        _selectionClipboardCheckBox.Checked = _config.SelectionClipboardFallback;
+        _selectionHistoryCheckBox.Checked = _config.SelectionShowHistory;
+        _selectionOverlayCheckBox.Checked = _config.SelectionShowOverlay;
+        _hoverMinLengthNumeric.Value = _config.HoverMinTextLength;
+        _hoverHistoryCheckBox.Checked = _config.HoverShowHistory;
+        _hoverOverlayCheckBox.Checked = _config.HoverShowOverlay;
+
+        _toggleHotkeyTextBox.Text = _config.ToggleHotkey;
+        _captureHotkeyTextBox.Text = _config.CaptureHotkey;
+        _toggleOcrHotkeyTextBox.Text = _config.ToggleOcrHotkey;
+
+        _cacheAutoSaveCheckBox.Checked = _config.CacheAutoSaveEnabled;
+        _cacheAutoSaveIntervalNumeric.Value = _config.CacheAutoSaveIntervalMinutes;
+        _cacheAutoSaveJsonCheckBox.Checked = _config.CacheAutoSaveExportJson;
+        _cacheAutoSaveCsvCheckBox.Checked = _config.CacheAutoSaveExportCsv;
+        _cacheAutoSaveDirTextBox.Text = _config.CacheAutoSaveDirectory;
+    }
+
+    private void OnTabChanged(object? sender, EventArgs e)
+    {
+        if (_transTestResultLabel == null) return; // 初始化期间不处理
+        bool isApiTab = _tabControl.SelectedIndex == 0;
+        if (!isApiTab)
+        {
+            _transTestResultLabel.Text = "";
+            _ocrTestResultLabel.Text = "";
+        }
+    }
+
+    private void OnOcrSchemeChanged(object? sender, EventArgs e)
+    {
+        if (_tencentOcrIdTextBox == null) return; // 初始化期间不处理
+        bool isCloud = _cloudOcrRadio.Checked;
+        _tencentOcrIdTextBox.Enabled = isCloud;
+        _tencentOcrKeyTextBox.Enabled = isCloud;
+        _baiduOcrIdTextBox.Enabled = isCloud;
+        _baiduOcrKeyTextBox.Enabled = isCloud;
+        _alibabaOcrIdTextBox.Enabled = isCloud;
+        _alibabaOcrKeyTextBox.Enabled = isCloud;
+    }
+
+    private async void OnTransTestClicked(object? sender, EventArgs e)
+    {
+        _transTestButton.Enabled = false;
+        _transTestResultLabel.ForeColor = Color.Gray;
+        _transTestResultLabel.Text = "正在测试...";
+
+        try
+        {
+            var (translatorId, id, key) = _translatorComboBox.SelectedIndex switch
+            {
+                0 => ("tencent", _tencentSecretIdTextBox.Text.Trim(), _tencentSecretKeyTextBox.Text.Trim()),
+                1 => ("baidu", _baiduAppIdTextBox.Text.Trim(), _baiduSecretKeyTextBox.Text.Trim()),
+                2 => ("alibaba", _alibabaKeyIdTextBox.Text.Trim(), _alibabaKeySecretTextBox.Text.Trim()),
+                _ => ("", "", ""),
+            };
+
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(key))
+            {
+                _transTestResultLabel.ForeColor = Color.Red;
+                _transTestResultLabel.Text = "请先填写完整的 API 密钥";
+                return;
+            }
+
+            ITranslator? translator = CreateTranslatorFromFields(id, key, translatorId);
+            if (translator == null)
+            {
+                _transTestResultLabel.ForeColor = Color.Red;
+                _transTestResultLabel.Text = "未知翻译器类型";
+                return;
+            }
+
+            TranslationResult result;
+            try
+            {
+                result = await translator.TranslateAsync("hello", Language.English, Language.Chinese);
+            }
+            catch
+            {
+                await Task.Delay(300);
+                result = await translator.TranslateAsync("hello", Language.English, Language.Chinese);
+            }
+
+            if (result.Success)
+            {
+                _transTestResultLabel.ForeColor = Color.Green;
+                _transTestResultLabel.Text = $"成功！hello → {result.TranslatedText}";
+            }
+            else
+            {
+                _transTestResultLabel.ForeColor = Color.Red;
+                _transTestResultLabel.Text = $"失败: {result.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _transTestResultLabel.ForeColor = Color.Red;
+            _transTestResultLabel.Text = $"出错: {ex.Message}";
+        }
+        finally
+        {
+            _transTestButton.Enabled = true;
+        }
+    }
+
+    private ITranslator? CreateTranslatorFromFields(string id, string key, string type)
+    {
+        return type switch
+        {
+            "tencent" => new TencentTranslator(id, key),
+            "baidu" => new BaiduTranslator(id, key),
+            "alibaba" => new AlibabaTranslator(id, key),
+            _ => null,
+        };
+    }
+
+    private void ShowApiKeyHelp()
+    {
+        var helpText = @"【翻译 API 密钥获取指南】
+
+● 腾讯翻译
+  1. 访问 https://console.cloud.tencent.com/tmt
+  2. 开通「文本翻译」服务
+  3. 在「访问管理」→「API 密钥管理」中获取 SecretId 和 SecretKey
+
+● 百度翻译
+  1. 访问 https://fanyi-api.baidu.com/
+  2. 注册账号并开通「通用翻译」
+  3. 在「开发者信息」中获取 AppId 和 Secret Key
+
+● 阿里翻译
+  1. 访问 https://www.aliyun.com/product/alimt
+  2. 开通「机器翻译」服务
+  3. 在「AccessKey 管理」中获取 AccessKeyId 和 AccessKeySecret
+
+【OCR API 密钥获取指南】
+
+● 腾讯 OCR
+  1. 访问 https://console.cloud.tencent.com/ocr
+  2. 开通「通用文字识别」
+  3. 使用与翻译相同的 SecretId 和 SecretKey（或单独配置）
+
+● 百度 OCR
+  1. 访问 https://console.bce.baidu.com/ai/#/ai/ocr/overview/index
+  2. 开通「通用文字识别」
+  3. 在「应用列表」中获取 API Key 和 Secret Key
+
+● Windows 内置 OCR
+  无需密钥，但需安装语言包：
+  设置 → 时间和语言 → 语言 → 添加语言 → 勾选「语言包」";
+
+        MessageBox.Show(helpText, "API 密钥获取帮助",
+            MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }
