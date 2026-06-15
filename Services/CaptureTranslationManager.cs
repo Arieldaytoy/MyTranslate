@@ -95,15 +95,15 @@ public class CaptureTranslationManager : IDisposable
             _resultOverlay.CopyClicked += OnCopyClicked;
         }
 
-        var sourceTag = isBuiltIn ? "内置" : "API";
-        var providerTag = isBuiltIn ? "内置OCR" : $"{providerName}OCR";
+        //var sourceTag = isBuiltIn ? "内置" : "API";
+        var providerTag = isBuiltIn ? "内置OCR" : providerName ?? "未知";
 
         var result = new TranslationResult
         {
             OriginalText = ocrText,
             TranslatedText = ocrText,
             Success = true,
-            InputTag = $"[{providerTag}][{sourceTag}]",
+            InputTag = $"[{providerTag}]",//[{sourceTag}]
             SourceLanguage = Language.Auto,
             TargetLanguage = Language.Auto,
             TranslatorName = providerName,

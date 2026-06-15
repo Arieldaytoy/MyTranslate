@@ -11,6 +11,7 @@ public class SettingsForm : Form
 {
     private readonly AppConfig _config;
     private readonly TranslationEngine _engine;
+    private readonly Main_Translate? _mainForm;
     private TabControl _tabControl = null!;
 
     // ========== API设置页签控件 ==========
@@ -80,12 +81,38 @@ public class SettingsForm : Form
     /// <summary>设置保存后触发</summary>
     public event EventHandler<AppConfig>? SettingsSaved;
 
-    public SettingsForm(AppConfig config, TranslationEngine engine)
+    public SettingsForm(AppConfig config, TranslationEngine engine, Main_Translate? mainForm = null)
     {
         _config = config;
         _engine = engine;
+        _mainForm = mainForm;
         InitializeComponents();
         LoadSettings();
+
+        // 监听主窗口的 OCR 方案变更，实时同步单选按钮
+        if (_mainForm != null)
+        {
+            _mainForm.OcrSchemeChanged += OnExternalOcrSchemeChanged;
+            this.FormClosed += (s, e) => _mainForm.OcrSchemeChanged -= OnExternalOcrSchemeChanged;
+        }
+    }
+
+    /// <summary>主窗口通过快捷键切换 OCR 时，同步更新本窗口的单选按钮</summary>
+    private void OnExternalOcrSchemeChanged(object? sender, string schemeName)
+    {
+        if (_windowsOcrRadio == null || _cloudOcrRadio == null) return;
+        // 确保在 UI 线程执行
+        if (InvokeRequired)
+            Invoke(() => ApplyOcrSchemeToRadio(schemeName));
+        else
+            ApplyOcrSchemeToRadio(schemeName);
+    }
+
+    private void ApplyOcrSchemeToRadio(string schemeName)
+    {
+        bool isBuiltIn = schemeName == "内置";
+        _windowsOcrRadio.Checked = isBuiltIn;
+        _cloudOcrRadio.Checked = !isBuiltIn;
     }
 
     private void InitializeComponents()
@@ -135,6 +162,7 @@ public class SettingsForm : Form
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
         };
         _cancelButton.Location = new Point(buttonPanel.Width - 190, 9);
+        _cancelButton.Click += (s, e) => Close();
 
         buttonPanel.Controls.Add(_okButton);
         buttonPanel.Controls.Add(_cancelButton);
@@ -390,9 +418,13 @@ public class SettingsForm : Form
                     return;
                 }
 
-                CaptureNs.IOcrProvider provider = providerIdx == 1
-                    ? new CaptureNs.BaiduOcrProvider(secretId, secretKey)
-                    : new CaptureNs.CloudOcrProvider(secretId, secretKey);
+                CaptureNs.IOcrProvider provider = providerIdx switch
+                {
+                    0 => new CaptureNs.CloudOcrProvider(secretId, secretKey),
+                    1 => new CaptureNs.BaiduOcrProvider(secretId, secretKey),
+                    2 => new CaptureNs.AlibabaOcrProvider(secretId, secretKey),
+                    _ => new CaptureNs.CloudOcrProvider(secretId, secretKey),
+                };
 
                 using var bmp = new Bitmap(200, 50);
                 using var g = Graphics.FromImage(bmp);
@@ -1084,9 +1116,9 @@ public class SettingsForm : Form
   3. 在「开发者信息」中获取 AppId 和 Secret Key
 
 ● 阿里翻译
-  1. 访问 https://www.aliyun.com/product/alimt
-  2. 开通「机器翻译」服务
-  3. 在「AccessKey 管理」中获取 AccessKeyId 和 AccessKeySecret
+  1. 访问 https://ram.console.aliyun.com
+  2. 创建用户并授权「机器翻译」权限
+  3. 在「认证管理」中获取 AccessKeyId 和 AccessKeySecret
 
 【OCR API 密钥获取指南】
 

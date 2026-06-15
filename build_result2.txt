@@ -1,0 +1,12 @@
+﻿  正在确定要还原的项目…
+  已还原 d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj (用时 276 毫秒)。
+d:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+  MyTranslate -> d:\Documents\Ariel Programs\MyTranslate\bin\Debug\net10.0-windows10.0.19041.0\MyTranslate.dll
+
+已成功生成。
+
+d:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+    1 个警告
+    0 个错误
+
+已用时间 00:00:02.58

@@ -1,0 +1,14 @@
+﻿  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+D:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\Services\CaptureTranslationManager.cs(109,30): warning CS8601: 可能的 null 引用赋值。 [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+  MyTranslate -> D:\Documents\Ariel Programs\MyTranslate\bin\Debug\net10.0-windows10.0.19041.0\MyTranslate.dll
+
+已成功生成。
+
+D:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\Services\CaptureTranslationManager.cs(109,30): warning CS8601: 可能的 null 引用赋值。 [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+    2 个警告
+    0 个错误
+
+已用时间 00:00:02.82

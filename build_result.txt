@@ -1,0 +1,15 @@
+﻿  正在确定要还原的项目…
+  已还原 d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj (用时 286 毫秒)。
+d:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+d:\Documents\Ariel Programs\MyTranslate\Capture\AlibabaOcrProvider.cs(119,31): error CS0246: 未能找到类型或命名空间名“RecognizeGeneralAdvanceRequest”(是否缺少 using 指令或程序集引用?) [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+d:\Documents\Ariel Programs\MyTranslate\Capture\AlibabaOcrProvider.cs(127,46): error CS1061: “Client”未包含“RecognizeGeneralAdvanceAsync”的定义，并且找不到可接受第一个“Client”类型参数的可访问扩展方法“RecognizeGeneralAdvanceAsync”(是否缺少 using 指令或程序集引用?) [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+
+生成失败。
+
+d:\Documents\Ariel Programs\MyTranslate\Main_Translate.cs(118,13): warning CS8602: 解引用可能出现空引用。 [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+d:\Documents\Ariel Programs\MyTranslate\Capture\AlibabaOcrProvider.cs(119,31): error CS0246: 未能找到类型或命名空间名“RecognizeGeneralAdvanceRequest”(是否缺少 using 指令或程序集引用?) [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+d:\Documents\Ariel Programs\MyTranslate\Capture\AlibabaOcrProvider.cs(127,46): error CS1061: “Client”未包含“RecognizeGeneralAdvanceAsync”的定义，并且找不到可接受第一个“Client”类型参数的可访问扩展方法“RecognizeGeneralAdvanceAsync”(是否缺少 using 指令或程序集引用?) [d:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+    1 个警告
+    2 个错误
+
+已用时间 00:00:06.42

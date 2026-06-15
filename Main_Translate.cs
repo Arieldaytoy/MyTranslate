@@ -38,6 +38,12 @@ public partial class Main_Translate : Form
     private bool _isTranslationEnabled;
     private DateTime _lastToggleTime = DateTime.MinValue;
 
+    // ========== OCR 当前方案名称（全局单一来源） ==========
+    private string _currentOcrSchemeName = "内置";
+
+    /// <summary>OCR 方案变更事件（供设置窗口等外部监听）</summary>
+    public event EventHandler<string>? OcrSchemeChanged;
+
     // ========== 翻译历史 ==========
     private readonly List<TranslationResult> _history = [];
 
@@ -101,6 +107,19 @@ public partial class Main_Translate : Form
 
         // 根据当前供应商注册 OCR 提供商
         InitializeOcrProvider();
+
+        // 设置 OCR 主提供商
+        bool useBuiltin = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
+        string primaryId = useBuiltin ? winOcr.Id : GetCurrentOcrProviderId();
+        if (!_ocrManager.SetPrimaryProvider(primaryId) && !useBuiltin)
+        {
+            _ocrManager.SetPrimaryProvider(winOcr.Id);
+            _config.OcrProvider = CaptureNs.OcrProvider.WindowsBuiltIn;
+            _config.Save();
+        }
+
+        // 初始化 OCR 方案全局变量和状态栏标签
+        RefreshOcrScheme();
 
         _captureManager = new CaptureTranslationManager(
             _ocrManager, _translationEngine, _config);
@@ -356,7 +375,13 @@ public partial class Main_Translate : Form
             if (translator.Name == selectedName)
             {
                 _translationEngine.SetCurrentTranslator(translator.Id);
-                StateInfo_toolStripStatusLabel.Text = $"已切换到 {translator.Name}";
+                _config.CurrentTranslatorId = translator.Id;
+                _config.Save();
+
+                // 同步切换 OCR 提供商
+                ReinitializeOcr();
+
+                StateInfo_toolStripStatusLabel.Text = $"已切换到 {translator.Name}（翻译+OCR）";
                 break;
             }
         }
@@ -364,11 +389,24 @@ public partial class Main_Translate : Form
 
     // ========== 设置窗口 ==========
 
+    private SettingsForm? _settingsForm;
+
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
-        var settingsForm = new SettingsForm(_config, _translationEngine);
-        settingsForm.SettingsSaved += OnSettingsSaved;
-        settingsForm.ShowDialog(this);
+        // 如果设置窗口已打开，激活它而不是重复创建
+        if (_settingsForm != null && !_settingsForm.IsDisposed)
+        {
+            _settingsForm.Activate();
+            return;
+        }
+
+        _settingsForm = new SettingsForm(_config, _translationEngine, this);
+        _settingsForm.SettingsSaved += OnSettingsSaved;
+        _settingsForm.FormClosed += (s, args) =>
+        {
+            _settingsForm = null;
+        };
+        _settingsForm.Show(this); // 非模态，允许主窗口继续接收快捷键
     }
 
     private void OnSettingsSaved(object? sender, AppConfig config)
@@ -417,7 +455,22 @@ public partial class Main_Translate : Form
         InitializeOcrProvider();
 
         bool useBuiltin = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn;
-        _ocrManager.SetPrimaryProvider(useBuiltin ? winOcr.Id : GetCurrentOcrProviderId());
+        string primaryId = useBuiltin ? winOcr.Id : GetCurrentOcrProviderId();
+        bool primarySet = _ocrManager.SetPrimaryProvider(primaryId);
+
+        // 如果 API 供应商注册失败（密钥未配置等），回退到内置
+        if (!primarySet && !useBuiltin)
+        {
+            _ocrManager.SetPrimaryProvider(winOcr.Id);
+            _config.OcrProvider = CaptureNs.OcrProvider.WindowsBuiltIn;
+            _config.Save();
+            System.Diagnostics.Debug.WriteLine($"[Main] OCR 供应商 {primaryId} 注册失败，已回退到内置");
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[Main] OCR Primary: {primaryId}, Providers: {string.Join(", ", _ocrManager.GetProviderNames())}");
+
+        // 更新全局 OCR 方案变量和状态栏标签
+        RefreshOcrScheme();
 
         // 重建 CaptureTranslationManager
         _captureManager?.Dispose();
@@ -436,25 +489,35 @@ public partial class Main_Translate : Form
     private void InitializeOcrProvider()
     {
         string translatorId = _config.CurrentTranslatorId;
+        System.Diagnostics.Debug.WriteLine($"[Main] InitializeOcrProvider for translator: {translatorId}");
 
         if (translatorId == "tencent")
         {
             string id = !string.IsNullOrEmpty(_config.TencentOcrSecretId) ? _config.TencentOcrSecretId : _config.TencentSecretId;
             string key = !string.IsNullOrEmpty(_config.TencentOcrSecretKey) ? _config.TencentOcrSecretKey : _config.TencentSecretKey;
             if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(key))
+            {
                 _ocrManager.RegisterProvider(new CloudOcrProvider(id, key));
+                System.Diagnostics.Debug.WriteLine($"[Main] Registered Tencent OCR");
+            }
         }
         else if (translatorId == "baidu")
         {
             if (!string.IsNullOrEmpty(_config.BaiduOcrApiKey) && !string.IsNullOrEmpty(_config.BaiduOcrSecretKey))
+            {
                 _ocrManager.RegisterProvider(new BaiduOcrProvider(_config.BaiduOcrApiKey, _config.BaiduOcrSecretKey));
+                System.Diagnostics.Debug.WriteLine($"[Main] Registered Baidu OCR");
+            }
         }
         else if (translatorId == "alibaba")
         {
             string id = !string.IsNullOrEmpty(_config.AlibabaOcrAccessKeyId) ? _config.AlibabaOcrAccessKeyId : _config.AlibabaAccessKeyId;
             string key = !string.IsNullOrEmpty(_config.AlibabaOcrAccessKeySecret) ? _config.AlibabaOcrAccessKeySecret : _config.AlibabaAccessKeySecret;
             if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(key))
-                _ocrManager.RegisterProvider(new CloudOcrProvider(id, key));
+            {
+                _ocrManager.RegisterProvider(new CaptureNs.AlibabaOcrProvider(id, key));
+                System.Diagnostics.Debug.WriteLine($"[Main] Registered Alibaba OCR with id={id}");
+            }
         }
     }
 
@@ -464,7 +527,7 @@ public partial class Main_Translate : Form
         {
             "tencent" => CloudOcrProvider.TencentId,
             "baidu" => "baidu_ocr",
-            "alibaba" => CloudOcrProvider.TencentId, // 阿里使用腾讯 OCR 兼容接口
+            "alibaba" => CaptureNs.AlibabaOcrProvider.AlibabaId,
             _ => CloudOcrProvider.TencentId,
         };
     }
@@ -601,16 +664,55 @@ public partial class Main_Translate : Form
 
     private void ToggleOcrScheme()
     {
-        _config.OcrProvider = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn
-            ? CaptureNs.OcrProvider.TencentOcr
-            : CaptureNs.OcrProvider.WindowsBuiltIn;
+        if (_config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn)
+        {
+            // 当前是内置 → 切换到当前翻译器对应的供应商
+            _config.OcrProvider = CaptureNs.OcrProvider.TencentOcr;
+            var providerName = GetCurrentOcrProviderName();
+            ReinitializeOcr();
 
-        ReinitializeOcr();
+            // 如果回退到内置（说明 API 供应商密钥未配置）
+            if (_config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn)
+            {
+                StateInfo_toolStripStatusLabel.Text = $"OCR 切换失败：{providerName} OCR 密钥未配置，请先在设置中配置";
+                _trayManager.ShowBalloonTip("MyTranslate", $"OCR 切换失败：{providerName} 密钥未配置");
+                return;
+            }
 
-        var schemeName = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn ? "内置" : "API";
-        _config.Save();
-        StateInfo_toolStripStatusLabel.Text = $"OCR 方案已切换为：{schemeName}";
-        _trayManager.ShowBalloonTip("MyTranslate", $"OCR 方案：{schemeName}");
+            _config.Save();
+            StateInfo_toolStripStatusLabel.Text = $"OCR 已切换为：{_currentOcrSchemeName} [API]";
+            _trayManager.ShowBalloonTip("MyTranslate", $"OCR：{_currentOcrSchemeName} [API]");
+        }
+        else
+        {
+            // 当前是供应商 → 切换到内置
+            _config.OcrProvider = CaptureNs.OcrProvider.WindowsBuiltIn;
+            ReinitializeOcr();
+            _config.Save();
+            StateInfo_toolStripStatusLabel.Text = $"OCR 已切换为：{_currentOcrSchemeName}";
+            _trayManager.ShowBalloonTip("MyTranslate", $"OCR：{_currentOcrSchemeName}");
+        }
+    }
+
+    /// <summary>刷新 OCR 方案：更新全局变量 + 状态栏标签（全局唯一入口）</summary>
+    private void RefreshOcrScheme()
+    {
+        _currentOcrSchemeName = _config.OcrProvider == CaptureNs.OcrProvider.WindowsBuiltIn
+            ? "内置"
+            : GetCurrentOcrProviderName();
+        OcrScheme_toolStripStatusLabel.Text = $"OCR:{_currentOcrSchemeName}";
+        OcrSchemeChanged?.Invoke(this, _currentOcrSchemeName);
+    }
+
+    private string GetCurrentOcrProviderName()
+    {
+        return _config.CurrentTranslatorId switch
+        {
+            "tencent" => "腾讯",
+            "baidu" => "百度",
+            "alibaba" => "阿里",
+            _ => "供应商",
+        };
     }
 
     private void ToggleTranslation()

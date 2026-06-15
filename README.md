@@ -1,4 +1,4 @@
-﻿# MyTranslate
+# MyTranslate
 
 基于 C# / .NET 10 WinForms 的桌面翻译工具，支持手动输入翻译、全局划词翻译、全局悬停翻译、OCR 截图翻译四种模式。常驻系统托盘，通过 `Ctrl+Y` 全局快捷键开关翻译功能。
 
@@ -21,7 +21,7 @@
 
 ### 核心能力
 
-- **多翻译引擎**：腾讯翻译（已实现）、百度翻译（预留）、阿里翻译（预留）
+- **多翻译引擎**：腾讯翻译（已实现）、百度翻译（已实现）、阿里翻译（已实现）
 
 - **智能缓存**：正向/反向/链式三级缓存查找，减少 API 调用
 ![缓存界面](Images/缓存界面.png)
@@ -88,8 +88,10 @@
 |------|------|
 | .NET 10 WinForms | 桌面应用框架 |
 | TencentCloudSDK.tmt | 腾讯翻译 API |
+| AlibabaCloud.SDK.Alimt20181012 | 阿里翻译 API |
 | Windows.Media.Ocr | Windows 内置 OCR |
 | TencentCloudSDK.ocr | 腾讯 OCR（高精度备选） |
+| 阿里云 OCR HTTP API | 阿里 OCR（ocr-api.cn-hangzhou.aliyuncs.com） |
 | Win32 SetWindowsHookEx (WH_MOUSE_LL) | 全局鼠标钩子 |
 | Windows UI Automation | 窗口文字读取 |
 | GDI+ CopyFromScreen | 屏幕截图 |
@@ -103,8 +105,8 @@ MyTranslate/
 ├── Core/                          # 核心业务（与界面解耦）
 │   ├── ITranslator.cs             # 翻译器统一接口
 │   ├── TencentTranslator.cs       # 腾讯翻译实现
-│   ├── BaiduTranslator.cs         # 百度翻译（预留）
-│   ├── AlibabaTranslator.cs       # 阿里翻译（预留）
+│   ├── BaiduTranslator.cs         # 百度翻译实现
+│   ├── AlibabaTranslator.cs       # 阿里翻译实现
 │   ├── TranslationEngine.cs       # 翻译调度器（规范化→同语言→缓存→术语→API）
 │   ├── LanguageInfo.cs            # 语言枚举与 API 代码映射
 │   ├── LanguageDetector.cs        # Unicode 范围语言检测
@@ -118,6 +120,8 @@ MyTranslate/
 │   ├── IOcrProvider.cs            # OCR 接口
 │   ├── WindowsOcrProvider.cs      # Windows 内置 OCR（Windows.Media.Ocr）
 │   ├── CloudOcrProvider.cs        # 云端 OCR（腾讯 GeneralBasicOCR）
+│   ├── BaiduOcrProvider.cs        # 百度 OCR 实现
+│   ├── AlibabaOcrProvider.cs      # 阿里 OCR 实现
 │   ├── OcrManager.cs             # OCR 调度（优先本地，失败走云端 + 结果后处理）
 │   ├── ScreenCaptureHelper.cs     # 屏幕截图辅助（区域截图 + 鼠标周围截图 + DPI 适配）
 │   └── ClipboardHelper.cs         # 剪贴板辅助方案
@@ -200,8 +204,9 @@ MyTranslate/
 - [x] **第一阶段**：基础框架 + 手动翻译
 - [x] **第二阶段**：划词翻译
 - [x] **第三阶段**：悬停翻译
-- [ ] **第四阶段**：OCR 文字识别与翻译
+- [x] **第四阶段**：OCR 文字识别与翻译
 - [ ] **第五阶段**：体验打磨
+- [ ] **第六阶段**：多供应商扩展（百度翻译/OCR 已完成，阿里翻译/OCR 已完成）
 
 ## 使用前提
 

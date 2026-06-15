@@ -27,8 +27,8 @@ MyTranslate/
 ├── Core/                          # 核心业务（与界面解耦）
 │   ├── ITranslator.cs             # 翻译器统一接口
 │   ├── TencentTranslator.cs       # 腾讯翻译实现（含 SDK 预热）
-│   ├── BaiduTranslator.cs         # 百度翻译（待实现）
-│   ├── AlibabaTranslator.cs       # 阿里翻译（待实现）
+│   ├── BaiduTranslator.cs         # 百度翻译实现
+│   ├── AlibabaTranslator.cs       # 阿里翻译实现
 │   ├── GoogleTranslator.cs        # Google 翻译（待实现）
 │   ├── ZhipuTranslator.cs         # 智谱 AI 翻译（待实现）
 │   ├── DeepSeekTranslator.cs      # DeepSeek 翻译（待实现）
@@ -47,7 +47,8 @@ MyTranslate/
 │   ├── IOcrProvider.cs            # OCR 提供商统一接口
 │   ├── WindowsOcrProvider.cs      # Windows 内置 OCR（Bitmap→SoftwareBitmap→OcrEngine）
 │   ├── CloudOcrProvider.cs        # 腾讯云 OCR（GeneralBasicOCR，TencentCloudSDK.ocr）
-│   ├── BaiduOcrProvider.cs        # 百度 OCR（待实现）
+│   ├── BaiduOcrProvider.cs        # 百度 OCR 实现
+│   ├── AlibabaOcrProvider.cs      # 阿里 OCR 实现（ocr-api.cn-hangzhou.aliyuncs.com）
 │   ├── CustomOcrProvider.cs       # 自定义 OCR API（待实现）
 │   ├── OcrManager.cs             # OCR 调度（主引擎识别，支持来源追踪）
 │   ├── ScreenCaptureHelper.cs     # 屏幕截图辅助（区域截图 + 鼠标周围截图 + DPI 适配）
@@ -207,7 +208,17 @@ MyTranslate/
    - 解析 TextDetections 拼接文字
    - 支持独立 SecretId/SecretKey 配置
 
-3. OcrManager 完善
+3. BaiduOcrProvider 实现（百度 OCR）
+   - HTTP API 调用
+   - AppId + API Key 认证
+   - AccessToken 刷新机制
+
+4. AlibabaOcrProvider 实现（阿里 OCR）
+   - HTTP API 调用（ocr-api.cn-hangzhou.aliyuncs.com）
+   - AccessKeyId + AccessKeySecret 认证
+   - HMAC-SHA1 签名
+
+5. OcrManager 完善
    - 主引擎识别 + 来源追踪（RecognizeWithSourceAsync 返回 providerName）
    - 根据配置切换主引擎（内置/API），不自动降级
 
@@ -256,7 +267,7 @@ MyTranslate/
 
 **已知限制**
 - Windows OCR 对小字/特殊字体识别精度有限
-- 腾讯 OCR 需要网络连接和有效密钥
+- API 识别需要网络连接和有效密钥，但每月有免费额度。轻度使用足够。
 
 
 #### 第五阶段：体验打磨
@@ -282,15 +293,15 @@ MyTranslate/
    - TencentCloudSDK.tmt
    - SecretId + SecretKey 认证
 
-2. 百度翻译（待实现）
+2. 百度翻译（已实现）
    - HTTP API 调用
    - AppId + SecretKey 认证
    - 签名：md5(appid+q+salt+key)
 
-3. 阿里翻译（待实现）
-   - HTTP API 调用
+3. 阿里翻译（已实现）
+   - AlibabaCloud.SDK.Alimt20181012 SDK
    - AccessKeyId + AccessKeySecret 认证
-   - 签名：HMAC-SHA1
+   - access_key 类型鉴权
 
 4. Google 翻译（待实现）
    - 免费 API（无需密钥，有频率限制）
@@ -318,10 +329,13 @@ MyTranslate/
 
 1. Windows 内置 OCR（已实现）
 2. 腾讯 OCR（已实现）
-3. 百度 OCR（待实现）
+3. 百度 OCR（已实现）
    - HTTP API 调用
    - AppId + API Key 认证
-4. 阿里 OCR（待实现）
+4. 阿里 OCR（已实现）
+   - HTTP API 调用（ocr-api.cn-hangzhou.aliyuncs.com）
+   - AccessKeyId + AccessKeySecret 认证
+   - 签名：HMAC-SHA1
 5. Google Vision OCR（待实现）
 6. 自定义 OCR API（待实现）
 
@@ -352,14 +366,15 @@ MyTranslate/
 | 1 | 定义供应商注册机制 | TranslationEngine.cs, OcrManager.cs |
 | 2 | 实现百度翻译 | BaiduTranslator.cs |
 | 3 | 实现阿里翻译 | AlibabaTranslator.cs |
-| 4 | 实现 Google 翻译 | GoogleTranslator.cs（新建） |
-| 5 | 实现智谱 AI 翻译 | ZhipuTranslator.cs（新建） |
-| 6 | 实现 DeepSeek 翻译 | DeepSeekTranslator.cs（新建） |
-| 7 | 实现自定义 API 翻译 | CustomTranslator.cs（新建） |
-| 8 | 实现百度 OCR | BaiduOcrProvider.cs（新建） |
-| 9 | 实现自定义 OCR API | CustomOcrProvider.cs（新建） |
-| 10 | 设置界面扩展（多供应商密钥配置） | SettingsForm.cs, AppConfig.cs |
-| 11 | 测试各供应商 | 集成测试 |
+| 4 | 实现百度 OCR | BaiduOcrProvider.cs |
+| 5 | 实现阿里 OCR | AlibabaOcrProvider.cs |
+| 6 | 实现 Google 翻译 | GoogleTranslator.cs（新建） |
+| 7 | 实现智谱 AI 翻译 | ZhipuTranslator.cs（新建） |
+| 8 | 实现 DeepSeek 翻译 | DeepSeekTranslator.cs（新建） |
+| 9 | 实现自定义 API 翻译 | CustomTranslator.cs（新建） |
+| 10 | 实现自定义 OCR API | CustomOcrProvider.cs（新建） |
+| 11 | 设置界面扩展（多供应商密钥配置） | SettingsForm.cs, AppConfig.cs |
+| 12 | 测试各供应商 | 集成测试 |
 
 
 ### 关键技术要点

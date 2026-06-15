@@ -1,0 +1,25 @@
+﻿  正在确定要还原的项目…
+  已还原 D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj (用时 275 毫秒)。
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103: Resx 文件无效。System.IO.FileNotFoundException: Could not find file 'D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\app_icon.ico'. [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103: File name: 'D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\app_icon.ico' [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at System.IO.File.ReadAllBytes(String path) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Build.Tasks.ResourceHandling.MSBuildResXReader.AddLinkedResource(String resxFilename, Boolean pathsRelativeToBasePath, List`1 resources, String name, String value) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Build.Tasks.ResourceHandling.MSBuildResXReader.ReadResources(Stream s, String filename, Boolean pathsRelativeToBasePath, TaskLoggingHelper log, Boolean logWarningForBinaryFormatter) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+
+生成失败。
+
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103: Resx 文件无效。System.IO.FileNotFoundException: Could not find file 'D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\app_icon.ico'. [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103: File name: 'D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\app_icon.ico' [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at System.IO.File.ReadAllBytes(String path) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Build.Tasks.ResourceHandling.MSBuildResXReader.AddLinkedResource(String resxFilename, Boolean pathsRelativeToBasePath, List`1 resources, String name, String value) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+D:\Documents\Ariel Programs\MyTranslate\temp_build\Properties\Resources.resx : error MSB3103:    at Microsoft.Build.Tasks.ResourceHandling.MSBuildResXReader.ReadResources(Stream s, String filename, Boolean pathsRelativeToBasePath, TaskLoggingHelper log, Boolean logWarningForBinaryFormatter) [D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj]
+    0 个警告
+    1 个错误
+
+已用时间 00:00:01.11

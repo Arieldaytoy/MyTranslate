@@ -1,0 +1,8 @@
+﻿_rels/.rels
+AlibabaCloud.SDK.Ocr-api20210707.nuspec
+lib/net45/AlibabaCloud.SDK.Ocr-api20210707.dll
+lib/netstandard2.0/AlibabaCloud.SDK.Ocr-api20210707.dll
+[Content_Types].xml
+package/services/metadata/core-properties/6e9a89e4de81418dbe33c3e68f02f616.psmdcp
+.signature.p7s
+

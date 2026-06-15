@@ -1,18 +1,13 @@
 namespace MyTranslate.Core;
 
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-
 /// <summary>
-/// 阿里翻译实现 — 基于阿里云机器翻译 OpenAPI
+/// 阿里翻译实现 — 基于阿里云机器翻译 SDK
 /// </summary>
 public class AlibabaTranslator : ITranslator
 {
     private readonly string _accessKeyId;
     private readonly string _accessKeySecret;
-    private static readonly HttpClient _httpClient = new();
+    private AlibabaCloud.SDK.Alimt20181012.Client? _client;
 
     public string Name => "阿里翻译";
     public string Id => "alibaba";
@@ -43,71 +38,54 @@ public class AlibabaTranslator : ITranslator
             string sourceLang = sourceInfo.AlibabaCode;
             string targetLang = targetInfo.AlibabaCode;
 
-            // 构建请求参数（按字母排序）
-            var parameters = new SortedDictionary<string, string>(StringComparer.Ordinal)
+            // 创建客户端
+            if (_client == null)
             {
-                { "Action", "TranslateGeneral" },
-                { "Format", "JSON" },
-                { "Version", "2018-10-12" },
-                { "SourceText", text },
-                { "SourceLanguage", sourceLang },
-                { "TargetLanguage", targetLang },
-                { "Scene", "general" },
+                var credentialConfig = new Aliyun.Credentials.Models.Config
+                {
+                    Type = "access_key",
+                    AccessKeyId = _accessKeyId,
+                    AccessKeySecret = _accessKeySecret,
+                };
+                var credential = new Aliyun.Credentials.Client(credentialConfig);
+                var config = new AlibabaCloud.OpenApiClient.Models.Config
+                {
+                    Credential = credential,
+                    Endpoint = "mt.cn-hangzhou.aliyuncs.com",
+                };
+                _client = new AlibabaCloud.SDK.Alimt20181012.Client(config);
+            }
+
+            // 构建请求
+            var request = new AlibabaCloud.SDK.Alimt20181012.Models.TranslateGeneralRequest
+            {
+                SourceText = text,
+                SourceLanguage = sourceLang,
+                TargetLanguage = targetLang,
+                FormatType = "text",
+                Scene = "general",
             };
 
-            // 构建公共参数
-            var commonParams = new SortedDictionary<string, string>(StringComparer.Ordinal)
-            {
-                { "AccessKeyId", _accessKeyId },
-                { "Action", "TranslateGeneral" },
-                { "Format", "JSON" },
-                { "RegionId", "cn-hangzhou" },
-                { "SignatureMethod", "HMAC-SHA1" },
-                { "SignatureNonce", Guid.NewGuid().ToString() },
-                { "SignatureVersion", "1.0" },
-                { "Timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { "Version", "2018-10-12" },
-            };
+            var runtime = new AlibabaCloud.TeaUtil.Models.RuntimeOptions();
 
-            // 合并所有参数用于签名
-            var allParams = new SortedDictionary<string, string>(StringComparer.Ordinal);
-            foreach (var kv in commonParams) allParams[kv.Key] = kv.Value;
-            foreach (var kv in parameters) allParams[kv.Key] = kv.Value;
-            allParams["Action"] = "TranslateGeneral";
+            // 调用 API
+            var response = await Task.Run(() => _client.TranslateGeneralWithOptions(request, runtime));
 
-            // 生成签名
-            string signature = ComputeSignature(allParams);
-            allParams.Add("Signature", signature);
-
-            // 构建请求 URL
-            string queryString = string.Join("&", allParams.Select(kv =>
-                $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
-
-            string url = $"https://mt.cn-hangzhou.aliyuncs.com/?{queryString}";
-
-            var response = await _httpClient.PostAsync(url, null);
             sw.Stop();
 
-            string responseBody = await response.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"[AlibabaTranslator] Response: {responseBody}");
-
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
+            System.Diagnostics.Debug.WriteLine($"[AlibabaTranslator] Code: {response?.Body?.Code}, Message: {response?.Body?.Message}");
 
             // 检查错误
-            if (root.TryGetProperty("Code", out var code))
+            if (response?.Body?.Code != null && response.Body.Code != 200)
             {
-                string msg = root.TryGetProperty("Message", out var msgEl)
-                    ? msgEl.GetString() ?? "未知错误"
-                    : "未知错误";
-                return TranslationResult.Fail(text, $"阿里翻译错误 [{code}]: {msg}", source, target, Name);
+                string msg = response.Body.Message ?? "未知错误";
+                return TranslationResult.Fail(text, $"阿里翻译错误 [{response.Body.Code}]: {msg}", source, target, Name);
             }
 
             // 提取翻译结果
-            if (root.TryGetProperty("Data", out var data) && data.TryGetProperty("Translated", out var translated))
+            if (response?.Body?.Data?.Translated != null)
             {
-                string result = translated.GetString() ?? "";
-                return TranslationResult.Ok(text, result, source, target, Name, sw.Elapsed);
+                return TranslationResult.Ok(text, response.Body.Data.Translated, source, target, Name, sw.Elapsed);
             }
 
             return TranslationResult.Fail(text, "未获取到翻译结果", source, target, Name);
@@ -121,31 +99,4 @@ public class AlibabaTranslator : ITranslator
 
     public bool IsConfigured()
         => !string.IsNullOrEmpty(_accessKeyId) && !string.IsNullOrEmpty(_accessKeySecret);
-
-    /// <summary>
-    /// 计算阿里云 API 签名（HMAC-SHA1）
-    /// </summary>
-    private string ComputeSignature(SortedDictionary<string, string> parameters)
-    {
-        // 1. 构建规范化查询字符串（URL 编码 key 和 value）
-        var canonicalized = new StringBuilder();
-        foreach (var kv in parameters)
-        {
-            if (canonicalized.Length > 0) canonicalized.Append('&');
-            canonicalized.Append(Uri.EscapeDataString(kv.Key));
-            canonicalized.Append('=');
-            canonicalized.Append(Uri.EscapeDataString(kv.Value));
-        }
-
-        // 2. 构建待签名字符串
-        string stringToSign = "POST" + "&" + Uri.EscapeDataString("/") + "&" + Uri.EscapeDataString(canonicalized.ToString());
-
-        System.Diagnostics.Debug.WriteLine($"[AlibabaTranslator] StringToSign: {stringToSign}");
-
-        // 3. 使用 HMAC-SHA1 签名（key = AccessKeySecret + "&"）
-        byte[] keyBytes = Encoding.UTF8.GetBytes(_accessKeySecret + "&");
-        using var hmac = new HMACSHA1(keyBytes);
-        byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
-        return Convert.ToBase64String(hash);
-    }
 }

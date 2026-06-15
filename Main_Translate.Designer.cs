@@ -26,6 +26,7 @@
             toolStripSeparator1 = new ToolStripSeparator();
             statusStrip1 = new StatusStrip();
             State_toolStripStatusLabel = new ToolStripStatusLabel();
+            OcrScheme_toolStripStatusLabel = new ToolStripStatusLabel();
             StateInfo_toolStripStatusLabel = new ToolStripStatusLabel();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
@@ -99,7 +100,7 @@
             // statusStrip1
             // 
             statusStrip1.ImageScalingSize = new Size(20, 20);
-            statusStrip1.Items.AddRange(new ToolStripItem[] { State_toolStripStatusLabel, StateInfo_toolStripStatusLabel });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { State_toolStripStatusLabel, StateInfo_toolStripStatusLabel, OcrScheme_toolStripStatusLabel });
             statusStrip1.Location = new Point(0, 566);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new Padding(1, 0, 16, 0);
@@ -114,12 +115,20 @@
             State_toolStripStatusLabel.Size = new Size(54, 20);
             State_toolStripStatusLabel.Text = "状态：";
             // 
+            // OcrScheme_toolStripStatusLabel
+            // 
+            OcrScheme_toolStripStatusLabel.Font = new Font("Microsoft YaHei UI", 11F);
+            OcrScheme_toolStripStatusLabel.Name = "OcrScheme_toolStripStatusLabel";
+            OcrScheme_toolStripStatusLabel.Size = new Size(75, 20);
+            OcrScheme_toolStripStatusLabel.Text = "OCR:内置";
+            OcrScheme_toolStripStatusLabel.ToolTipText = "当前 OCR 方案（Ctrl+Shift+O 切换）";
+            // 
             // StateInfo_toolStripStatusLabel
             // 
             StateInfo_toolStripStatusLabel.DisplayStyle = ToolStripItemDisplayStyle.Text;
             StateInfo_toolStripStatusLabel.Font = new Font("Microsoft YaHei UI", 11F);
             StateInfo_toolStripStatusLabel.Name = "StateInfo_toolStripStatusLabel";
-            StateInfo_toolStripStatusLabel.Size = new Size(893, 20);
+            StateInfo_toolStripStatusLabel.Size = new Size(818, 20);
             StateInfo_toolStripStatusLabel.Spring = true;
             StateInfo_toolStripStatusLabel.Text = "准备开始吧~";
             StateInfo_toolStripStatusLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -367,6 +376,7 @@
         private ToolStripButton Set_toolStripButton;
         private ToolStripStatusLabel State_toolStripStatusLabel;
         private ToolStripStatusLabel StateInfo_toolStripStatusLabel;
+        private ToolStripStatusLabel OcrScheme_toolStripStatusLabel;
         private ToolTip toolTip1;
         private ToolStripLabel Translator_toolStripLabel;
         private ToolStripComboBox Translator_toolStripComboBox;

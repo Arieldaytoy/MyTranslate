@@ -1,0 +1,27 @@
+﻿info : X.509 证书链验证将使用 .NET 选择的默认信任存储进行代码签名。
+info : X.509 证书链验证将使用 .NET 选择的默认信任存储进行时间戳。
+info : 正在将包“AlibabaCloud.DarabonbaStream”的 PackageReference 添加到项目“D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj”。
+info :   GET https://api.nuget.org/v3/registration5-gz-semver2/alibabacloud.darabonbastream/index.json
+info :   OK https://api.nuget.org/v3/registration5-gz-semver2/alibabacloud.darabonbastream/index.json 225 毫秒
+info : 正在还原 D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj 的包...
+info :   GET https://api.nuget.org/v3-flatcontainer/tencentcloudsdk.tmt/index.json
+info :   GET https://api.nuget.org/v3-flatcontainer/tencentcloudsdk.ocr/index.json
+info :   GET https://api.nuget.org/v3-flatcontainer/alibabacloud.darabonbastream/index.json
+info :   OK https://api.nuget.org/v3-flatcontainer/tencentcloudsdk.ocr/index.json 718 毫秒
+info :   OK https://api.nuget.org/v3-flatcontainer/tencentcloudsdk.tmt/index.json 730 毫秒
+info :   OK https://api.nuget.org/v3-flatcontainer/alibabacloud.darabonbastream/index.json 944 毫秒
+info :   GET https://api.nuget.org/v3-flatcontainer/alibabacloud.darabonbastream/0.0.1/alibabacloud.darabonbastream.0.0.1.nupkg
+info :   OK https://api.nuget.org/v3-flatcontainer/alibabacloud.darabonbastream/0.0.1/alibabacloud.darabonbastream.0.0.1.nupkg 222 毫秒
+info :   GET https://api.nuget.org/v3-flatcontainer/tea/index.json
+info :   OK https://api.nuget.org/v3-flatcontainer/tea/index.json 163 毫秒
+info : 已使用内容哈希 js8v3fQDl604D4ZzNPPWLDv9WKxXCcn6gwQEFHGubMV5PDrtTGkSK+GY9zqmXgVEumP1gv5gFYyhlqHnFhxdkw== 从 https://api.nuget.org/v3/index.json 到 C:\Users\lx105\.nuget\packages\alibabacloud.darabonbastream\0.0.1 安装 AlibabaCloud.DarabonbaStream 0.0.1。
+info :   GET https://api.nuget.org/v3/vulnerabilities/index.json
+info :   OK https://api.nuget.org/v3/vulnerabilities/index.json 159 毫秒
+info :   GET https://api.nuget.org/v3/vulnerabilities/vulnerability.base.json
+info :   GET https://api.nuget.org/v3/vulnerabilities/vulnerability.update.json
+info :   OK https://api.nuget.org/v3/vulnerabilities/vulnerability.update.json 163 毫秒
+info :   OK https://api.nuget.org/v3/vulnerabilities/vulnerability.base.json 783 毫秒
+info : 包“AlibabaCloud.DarabonbaStream”与项目“D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj”中指定的所有框架均兼容。
+info : 包“AlibabaCloud.DarabonbaStream”(版本为 0.0.1)的 PackageReference 已添加到文件“D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj”。
+info : 将资产文件写入磁盘。路径: D:\Documents\Ariel Programs\MyTranslate\obj\project.assets.json
+log  : 已还原 D:\Documents\Ariel Programs\MyTranslate\MyTranslate.csproj (用时 10.74 秒)。
